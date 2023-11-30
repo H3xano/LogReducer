@@ -1,0 +1,66 @@
+# .gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Logs
+log_reducer.log
+
+# Virtual environment
+venv/
+env/
+logs/
+loot/
+
+# IDE files
+.vscode/
+.idea/
+
+# Compiled files
+*.pyc
+*.pyo
+*.pyd
+*.pyz
+*.pyw
+__pycache__/
+
+# Dependency directories
+env/
+lib/
+lib64/
+bin/
+build/
+dist/
+node_modules/
+*.egg-info/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Compiled Python bytecode
+__pycache__/
+
+# Logs
+*.log
+
+# Compiled binary
+*.bin
+*.lock
+
+# Python
+*.pyc
+*.pyo
+__pycache__/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
