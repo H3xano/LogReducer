@@ -6,6 +6,9 @@ __pycache__/
 *.pyo
 *.pyd
 
+# Notes
+*.txt
+
 # Logs
 log_reducer.log
 
