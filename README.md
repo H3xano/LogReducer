@@ -22,13 +22,13 @@ Log Reducer is a Python tool designed to parse and reduce log files based on key
 1. Clone the repository:
 
     ```bash
-    git clone https://github.com/abdou0xdz/log-reducer.git
+    git clone https://github.com/Abdou0xdz/logReducer.git
     ```
 
 2. Navigate to the project folder:
 
     ```bash
-    cd log-reducer
+    cd logReducer
     ```
 
 3. (Optional) Create and activate a virtual environment:
