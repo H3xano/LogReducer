@@ -1,16 +1,8 @@
-import ipaddress
 import os
 import re
 import argparse
 import logging
-
-
-def is_reserved(ip):
-    try:
-        return ipaddress.ip_address(ip).is_private
-    except ValueError:
-        return False
-
+import ipaddress
 
 class LogReducer:
     def __init__(self, log_folder, output_folder, keywords=None, keyword_file=None, ip_addresses=None, ip_file=None, skip_reserved=False):
@@ -23,6 +15,7 @@ class LogReducer:
         self.keywords = self.read_from_file(keyword_file) if keyword_file else keywords
         self.ip_addresses = self.read_from_file(ip_file) if ip_file else ip_addresses
         self.skip_reserved = skip_reserved
+        self.current_file = None
         self.logger = self.setup_logger()
 
     def setup_logger(self):
@@ -43,15 +36,22 @@ class LogReducer:
 
         for root, dirs, files in os.walk(self.log_folder):
             for file in files:
-                file_path = os.path.join(root, file)
-                self.process_log_file(file_path)
+                self.current_file = os.path.relpath(os.path.join(root, file), self.log_folder)
+                self.process_log_file()
 
-    def process_log_file(self, file_path):
-        self.logger.info(f"Processing log file: {file_path}")
+    def process_log_file(self):
+        self.logger.info(f"Processing log file: {self.current_file}")
 
-        with open(file_path, 'r') as log_file:
-            for line in log_file:
-                self.process_line(line)
+        try:
+            # Print the absolute path for debugging
+            abs_file_path = os.path.abspath(os.path.join(self.log_folder, self.current_file))
+            self.logger.debug(f"Absolute file path: {abs_file_path}")
+
+            with open(os.path.join(self.log_folder, self.current_file), 'r') as log_file:
+                for line in log_file:
+                    self.process_line(line)
+        except Exception as e:
+            self.logger.error(f"An error occurred while processing file {self.current_file}: {str(e)}")
 
     def process_line(self, line):
         # Process IP addresses from the provided list or any IP if not provided
@@ -69,16 +69,22 @@ class LogReducer:
                 if re.search(keyword, line):
                     self.export_to_file(line, f"by_keyword/{keyword}.txt", self.keyword_global_file)
 
+    def is_reserved(self, ip):
+        try:
+            return ipaddress.ip_address(ip).is_private
+        except ValueError:
+            return False
+
     def export_to_file(self, line, file_path, global_file_path):
         output_folder = os.path.join(self.output_folder, os.path.dirname(file_path))
         os.makedirs(output_folder, exist_ok=True)
 
         with open(os.path.join(output_folder, os.path.basename(file_path)), 'a') as output_file:
-            output_file.write(line)
+            output_file.write(f"{self.current_file}: {line}")
 
         # Append the line to the global file
         with open(global_file_path, 'a') as global_file:
-            global_file.write(line)
+            global_file.write(f"{self.current_file}: {line}")
 
     def run(self):
         try:
@@ -86,7 +92,6 @@ class LogReducer:
             self.logger.info("Log reduction completed successfully.")
         except Exception as e:
             self.logger.error(f"An error occurred: {str(e)}")
-
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Reduce logs based on keyword or IP address.")
@@ -96,9 +101,8 @@ def parse_arguments():
     parser.add_argument("-kf", "--keyword_file", help="File containing a list of keywords.")
     parser.add_argument("-ip", "--ip_addresses", nargs='+', help="IP address(es) pattern to filter logs.")
     parser.add_argument("-ipf", "--ip_file", help="File containing a list of IP addresses.")
-    parser.add_argument("--skip-reserved", action="store_true", help="Skip reserved and private IP addresses.")
+    parser.add_argument("--skip-reserved", action="store_true", help="Skip reserved and local IP addresses.")
     return parser.parse_args()
-
 
 if __name__ == "__main__":
     # Parse command line arguments
@@ -107,7 +111,8 @@ if __name__ == "__main__":
     # Create an instance of LogReducer with provided arguments
     log_reducer = LogReducer(log_folder=args.log_folder, output_folder=args.output_folder,
                              keywords=args.keywords, keyword_file=args.keyword_file,
-                             ip_addresses=args.ip_addresses, ip_file=args.ip_file)
+                             ip_addresses=args.ip_addresses, ip_file=args.ip_file,
+                             skip_reserved=args.skip_reserved)
 
     # Run the log reduction process
     log_reducer.run()
